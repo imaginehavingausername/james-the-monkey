@@ -1,6 +1,8 @@
 {
-  "day_number": 2,
-  "last_published_date": "2026-09-03",
+  "day_number": 3,
+  "last_published_date": "2026-09-04",
   "location": "The Whispering Brook",
-  "canon_summary": "James takes a brave step out of his familiar jungle home and into the vast, wildflower-filled meadow to begin his journey of exploration.\nJames followed a gentle splashing sound to the edge of the meadow, where he discovered a sparkling brook and dipped his toes in the cool water."
+  "canon_summary": "James takes a brave step out of his familiar jungle home and into the vast, wildflower-filled meadow to begin his journey of exploration.\nJames followed a gentle splashing sound to the edge of the meadow, where he discovered a sparkling brook and dipped his toes in the cool water.\nJames rests by the Whispering Brook, counting his surroundings to soothe his mind. He discovers a beautiful, ice-cold blue pebble in the water and pockets it as his first keepsake.",
+  "world_lore": "Sky-blue pebbles are rare, smooth stones washed down to the Whispering Brook from the distant, cold mountains.",
+  "inventory": "a smooth sky-blue pebble"
 }

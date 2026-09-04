@@ -45,7 +45,10 @@
   }
 
   function paragraphsFromStory(story) {
+    // Handle both literal \n\n (which might come from JSON as \\n\\n) 
+    // and actual newline characters.
     return story
+      .replace(/\\n/g, "\n")
       .split(/\n{2,}/)
       .map((p) => p.trim())
       .filter(Boolean)
@@ -230,7 +233,14 @@
     attachKeyboard();
 
     const match = location.hash.match(/^#day-(\d+)$/);
-    const requestedDay = match ? Number(match[1]) : null;
+    const newestDay = index[index.length - 1].day;
+    let requestedDay = match ? Number(match[1]) : null;
+
+    if (requestedDay !== null && requestedDay !== newestDay) {
+      requestedDay = newestDay;
+      location.hash = `day-${newestDay}`;
+    }
+
     const startPos = requestedDay !== null ? index.findIndex((e) => e.day === requestedDay) : -1;
 
     await goTo(startPos !== -1 ? startPos : index.length - 1, "newer");
