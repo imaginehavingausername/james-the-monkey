@@ -38,6 +38,12 @@
       <div class="nav-center">
         <select id="jump-select" aria-label="Jump to an entry"></select>
         <button id="today-btn" class="today-pill" type="button" hidden>Today</button>
+        <button id="share-btn" class="nav-arrow" type="button" aria-label="Share this entry" style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 502.58 476.6" aria-hidden="true" focusable="false" width="28" height="28" style="display: block; stroke: #000; stroke-width: 40px; stroke-miterlimit: 133.33; fill: none; stroke-linecap: round; stroke-linejoin: round; transform: translateY(1px);">
+            <path d="M171.47,225.83l40.24,204.52c7.6,38.61,59.48,46.3,77.94,11.54L485.14,73.92c7.56-14.24,5.98-29.97-1.58-41.95M171.47,225.83L25.31,84.34C-1.68,58.21,16.82,12.5,54.39,12.5h393.82c15.41,0,28.11,8.02,35.34,19.47M171.47,225.83L483.56,31.97M486.28,30.28l-2.73,1.69"/>
+          </svg>
+          <span id="share-tooltip" style="position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--text, #333); color: var(--bg, #fff); padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 10;">Share link copied to clipboard</span>
+        </button>
       </div>
 
       <button id="next-btn" class="nav-arrow" type="button" aria-label="Next entry">

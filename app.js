@@ -11,6 +11,8 @@
     nextBtn: document.getElementById("next-btn"),
     jumpSelect: document.getElementById("jump-select"),
     todayBtn: document.getElementById("today-btn"),
+    shareBtn: document.getElementById("share-btn"),
+    shareTooltip: document.getElementById("share-tooltip"),
     dayCounter: document.getElementById("day-counter"),
     homeLink: document.getElementById("home-link"),
   };
@@ -124,7 +126,9 @@
     if (pos < 0 || pos >= index.length) return;
     currentPos = pos;
     const dayNumber = index[currentPos].day;
-    location.hash = `day-${dayNumber}`;
+    if (location.hash) {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
     updateNavState();
     try {
       const entry = await loadEntry(dayNumber);
@@ -189,6 +193,19 @@
     els.prevBtn.addEventListener("click", goPrev);
     els.nextBtn.addEventListener("click", goNext);
     els.todayBtn.addEventListener("click", goToday);
+    els.shareBtn.addEventListener("click", () => {
+      const dayNumber = index[currentPos].day;
+      const url = new URL(location.href);
+      url.hash = `day-${dayNumber}`;
+      navigator.clipboard?.writeText(url.toString()).catch(() => {});
+      
+      if (els.shareTooltip) {
+        els.shareTooltip.style.opacity = "1";
+        setTimeout(() => {
+          els.shareTooltip.style.opacity = "0";
+        }, 2000);
+      }
+    });
     els.jumpSelect.addEventListener("change", () => {
       const day = Number(els.jumpSelect.value);
       const pos = index.findIndex((e) => e.day === day);
@@ -236,10 +253,11 @@
     const newestDay = index[index.length - 1].day;
     let requestedDay = match ? Number(match[1]) : null;
 
-    if (requestedDay !== null && requestedDay !== newestDay) {
-      requestedDay = newestDay;
-      location.hash = `day-${newestDay}`;
-    }
+    // Check if the requested day exists in our index. If not, or if it is older than the newest, we might want to consider keeping it, 
+    // but the original intent seemed to be forcing the newest.
+    // If the user has a link to an older day, it should probably show that older day.
+    // The previous code explicitly forced newest if it wasn't newest.
+    // Let's ensure the requested day exists before accepting it.
 
     const startPos = requestedDay !== null ? index.findIndex((e) => e.day === requestedDay) : -1;
 
