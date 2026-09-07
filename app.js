@@ -94,7 +94,12 @@
   }
 
   async function loadIndex() {
-    const raw = await fetchJson(INDEX_URL);
+    // Cache-bust: GitHub Pages sets Cache-Control: max-age=600 on everything it
+    // serves and gives no way to override it, so a plain fetch -- even with
+    // {cache:"no-store"} -- can still get a stale copy back from GitHub's own
+    // CDN edge cache. A changing query string makes it a "new" URL as far as
+    // that CDN cache is concerned, forcing a real fetch of the current file.
+    const raw = await fetchJson(`${INDEX_URL}?_=${Date.now()}`);
     index = [...raw].sort((a, b) => a.day - b.day);
   }
 
@@ -148,6 +153,46 @@
 
   function goToday() {
     goTo(index.length - 1, "newer");
+  }
+
+  // Re-checks for new content when the tab comes back to life -- whether
+  // that's a genuine reload, or the browser silently resuming a page it had
+  // frozen/discarded in the background (which does NOT re-run init(), so
+  // without this a long-lived tab can be stuck showing whatever was newest
+  // the moment it was first opened, forever).
+  async function refreshIfStale() {
+    const wasAtLatest = currentPos === index.length - 1;
+    const previousNewestDay = index.length ? index[index.length - 1].day : null;
+    try {
+      await loadIndex();
+    } catch (err) {
+      return; // transient network hiccup -- leave whatever's already on screen alone
+    }
+    populateJumpSelect();
+    const newestDay = index.length ? index[index.length - 1].day : null;
+    if (wasAtLatest && newestDay !== null && newestDay !== previousNewestDay) {
+      // They were already looking at "today" -- follow it forward to the new today.
+      goTo(index.length - 1, "newer");
+      return;
+    }
+    // Otherwise leave them exactly where they were (don't yank someone out of
+    // an old entry they're reading), just re-sync the position pointer and
+    // nav bar in case the day count changed underneath them.
+    const day = index[currentPos]?.day ?? previousNewestDay;
+    const pos = index.findIndex((e) => e.day === day);
+    if (pos !== -1) {
+      currentPos = pos;
+      updateNavState();
+    }
+  }
+
+  function attachRefreshOnReturn() {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") refreshIfStale();
+    });
+    window.addEventListener("pageshow", (e) => {
+      if (e.persisted) refreshIfStale();
+    });
   }
 
   // ---------- input handling ----------
@@ -248,6 +293,7 @@
     els.nav.hidden = false;
     attachControls();
     attachKeyboard();
+    attachRefreshOnReturn();
 
     const match = location.hash.match(/^#day-(\d+)$/);
     const newestDay = index[index.length - 1].day;
