@@ -70,6 +70,29 @@
   }
 
   function renderEntry(entry, direction) {
+    const pageTitle = `Day ${entry.day} | James the Monkey`;
+    document.title = pageTitle;
+    
+    // Update meta tags for social share previews
+    const metaOgTitle = document.getElementById("meta-og-title");
+    const metaTwitterTitle = document.getElementById("meta-twitter-title");
+    if (metaOgTitle) metaOgTitle.setAttribute("content", pageTitle);
+    if (metaTwitterTitle) metaTwitterTitle.setAttribute("content", pageTitle);
+
+    const desc = entry.story ? entry.story.replace(/\\n/g, " ").slice(0, 150) + "..." : "A new chapter in James's story, every day.";
+    const metaOgDesc = document.getElementById("meta-og-desc");
+    const metaTwitterDesc = document.getElementById("meta-twitter-desc");
+    if (metaOgDesc) metaOgDesc.setAttribute("content", desc);
+    if (metaTwitterDesc) metaTwitterDesc.setAttribute("content", desc);
+
+    if (entry.image) {
+      const imageUrl = new URL(`${DAYS_DIR}/${entry.image}`, location.href).toString();
+      const metaOgImage = document.getElementById("meta-og-image");
+      const metaTwitterImage = document.getElementById("meta-twitter-image");
+      if (metaOgImage) metaOgImage.setAttribute("content", imageUrl);
+      if (metaTwitterImage) metaTwitterImage.setAttribute("content", imageUrl);
+    }
+
     const wrap = document.createElement("div");
     wrap.className = "entry" + (direction === "older" ? " dir-older" : "");
     wrap.innerHTML = `
