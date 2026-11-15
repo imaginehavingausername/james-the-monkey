@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>James the Monkey</title>
-<link rel="icon" type="image/webp" href="bigjamesnobg.png" />
+<link rel="icon" type="image/png" href="bigjamesnobg.png" />
 <meta name="description" content="A new chapter in James's story, every day." />
 <meta property="og:title" content="James the Monkey" id="meta-og-title" />
 <meta property="og:description" content="A new chapter in James's story, every day." id="meta-og-desc" />
@@ -35,7 +35,7 @@
   <div id="app">
     <header class="topbar">
       <a href="#" class="wordmark" id="home-link" aria-label="Back to today">
-        <img src="bigjamesnobg.png" alt="" class="mark" width: 46px; height: 46px;" />
+        <img src="bigjamesnobg.png" alt="" class="mark" width="46" height="46" />
         <span class="wordmark-text">James</span>
       </a>
       <div class="day-counter" id="day-counter" aria-live="polite"></div>
@@ -59,7 +59,7 @@
           <svg viewBox="0 0 502.58 476.6" aria-hidden="true" focusable="false" width="28" height="28" style="display: block; stroke: #000; stroke-width: 40px; stroke-miterlimit: 133.33; fill: none; stroke-linecap: round; stroke-linejoin: round; transform: translateY(1px);">
             <path d="M171.47,225.83l40.24,204.52c7.6,38.61,59.48,46.3,77.94,11.54L485.14,73.92c7.56-14.24,5.98-29.97-1.58-41.95M171.47,225.83L25.31,84.34C-1.68,58.21,16.82,12.5,54.39,12.5h393.82c15.41,0,28.11,8.02,35.34,19.47M171.47,225.83L483.56,31.97M486.28,30.28l-2.73,1.69"/>
           </svg>
-          <span id="share-tooltip" style="position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--text, #333); color: var(--bg, #fff); padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 10;">Share link copied to clipboard</span>
+          <span role="status" id="share-tooltip" style="position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--text, #333); color: var(--bg, #fff); padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s ease; z-index: 10;">Share link copied to clipboard</span>
         </button>
       </div>
 
@@ -67,6 +67,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
       </button>
     </nav>
+    <div class="share-link-wrap"><input id="share-link-fallback" type="text" readonly hidden aria-label="Share link: select and copy" /></div>
   </div>
 
   <script src="app.js"></script>

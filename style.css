@@ -8,7 +8,7 @@
   --accent-gold: #c9861f;
   --accent-gold-soft: #fbf1de;
 
-  --font-display: "Fraunces", Georgia, serif;
+  --font-display: "Source Serif 4", Georgia, Cambria, "Times New Roman", Times, serif;
   --font-body: "Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --content-width: 640px;
@@ -329,3 +329,7 @@ main {
     max-width: 140px;
   }
 }
+
+/* Clipboard fallback stays readable without squeezing the navigation controls. */
+.share-link-wrap { max-width: var(--content-width); width: 100%; margin: 0 auto; padding: 0 var(--space-3); }
+#share-link-fallback { width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--bg); color: var(--ink); }

@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const DAYS_DIR = "days";
+  const SITE_ROOT = new URL(".", document.baseURI);
+  const DAYS_DIR = new URL("days/", SITE_ROOT).href.replace(/\/$/, "");
   const INDEX_URL = `${DAYS_DIR}/index.json`;
 
   const els = {
@@ -13,6 +14,7 @@
     todayBtn: document.getElementById("today-btn"),
     shareBtn: document.getElementById("share-btn"),
     shareTooltip: document.getElementById("share-tooltip"),
+    shareFallback: document.getElementById("share-link-fallback"),
     dayCounter: document.getElementById("day-counter"),
     homeLink: document.getElementById("home-link"),
   };
@@ -20,6 +22,8 @@
   /** @type {{day:number, date:string, title:string}[]} sorted ascending by day */
   let index = [];
   let currentPos = -1; // position within `index`
+  let navigationRequest = 0;
+  let tooltipTimer;
   const entryCache = new Map(); // day number -> full entry payload
 
   // ---------- rendering: states ----------
@@ -61,7 +65,7 @@
   function escapeHtml(str) {
     const div = document.createElement("div");
     div.textContent = str;
-    return div.innerHTML;
+    return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
   function formatDate(isoDate) {
@@ -70,8 +74,10 @@
   }
 
   function renderEntry(entry, direction) {
-    const pageTitle = `Day ${entry.day} | James the Monkey`;
+    const pageTitle = `Day ${entry.day}: ${entry.title} | James the Monkey`;
     document.title = pageTitle;
+    document.getElementById("meta-og-url")?.setAttribute("content", entryUrl(entry.day).href);
+    document.getElementById("canonical-url")?.setAttribute("href", entryUrl(entry.day).href);
     
     // Update meta tags for social share previews
     const metaOgTitle = document.getElementById("meta-og-title");
@@ -150,20 +156,37 @@
     els.dayCounter.textContent = `Day ${index[currentPos].day} of ${index.length}`;
   }
 
-  async function goTo(pos, direction) {
+  async function goTo(pos, direction, { latest = false } = {}) {
     if (pos < 0 || pos >= index.length) return;
+    const request = ++navigationRequest;
     currentPos = pos;
+    els.shareBtn.disabled = true;
+    renderLoading();
+    els.shareFallback.hidden = true;
     const dayNumber = index[currentPos].day;
-    if (location.hash) {
-      history.replaceState(null, "", location.pathname + location.search);
-    }
     updateNavState();
     try {
       const entry = await loadEntry(dayNumber);
+      if (request !== navigationRequest) return;
       renderEntry(entry, direction);
+      history.replaceState(null, "", latest ? SITE_ROOT : entryUrl(dayNumber));
+      els.shareBtn.disabled = false;
     } catch (err) {
-      renderError("Couldn't load that entry — check your connection.", () => goTo(pos, direction));
+      if (request !== navigationRequest) return;
+      renderError("Couldn't load that entry — check your connection.", () => goTo(pos, direction, { latest }));
     }
+  }
+
+  function entryUrl(dayNumber) {
+    return new URL(`entries/day-${dayNumber}/`, SITE_ROOT);
+  }
+
+  function showShareMessage(message) {
+    if (!els.shareTooltip) return;
+    clearTimeout(tooltipTimer);
+    els.shareTooltip.textContent = message;
+    els.shareTooltip.style.opacity = "1";
+    tooltipTimer = setTimeout(() => { els.shareTooltip.style.opacity = "0"; }, 2500);
   }
 
   function goPrev() {
@@ -175,7 +198,7 @@
   }
 
   function goToday() {
-    goTo(index.length - 1, "newer");
+    goTo(index.length - 1, "newer", { latest: true });
   }
 
   // Re-checks for new content when the tab comes back to life -- whether
@@ -185,6 +208,8 @@
   // the moment it was first opened, forever).
   async function refreshIfStale() {
     const wasAtLatest = currentPos === index.length - 1;
+    const previousIndex = index;
+    const requestAtRefresh = navigationRequest;
     const previousNewestDay = index.length ? index[index.length - 1].day : null;
     try {
       await loadIndex();
@@ -193,15 +218,15 @@
     }
     populateJumpSelect();
     const newestDay = index.length ? index[index.length - 1].day : null;
-    if (wasAtLatest && newestDay !== null && newestDay !== previousNewestDay) {
+    if (wasAtLatest && requestAtRefresh === navigationRequest && newestDay !== null && newestDay !== previousNewestDay) {
       // They were already looking at "today" -- follow it forward to the new today.
-      goTo(index.length - 1, "newer");
+      goTo(index.length - 1, "newer", { latest: true });
       return;
     }
     // Otherwise leave them exactly where they were (don't yank someone out of
     // an old entry they're reading), just re-sync the position pointer and
     // nav bar in case the day count changed underneath them.
-    const day = index[currentPos]?.day ?? previousNewestDay;
+    const day = previousIndex[currentPos]?.day ?? previousNewestDay;
     const pos = index.findIndex((e) => e.day === day);
     if (pos !== -1) {
       currentPos = pos;
@@ -261,17 +286,18 @@
     els.prevBtn.addEventListener("click", goPrev);
     els.nextBtn.addEventListener("click", goNext);
     els.todayBtn.addEventListener("click", goToday);
-    els.shareBtn.addEventListener("click", () => {
-      const dayNumber = index[currentPos].day;
-      const url = new URL(location.href);
-      url.hash = `day-${dayNumber}`;
-      navigator.clipboard?.writeText(url.toString()).catch(() => {});
-      
-      if (els.shareTooltip) {
-        els.shareTooltip.style.opacity = "1";
-        setTimeout(() => {
-          els.shareTooltip.style.opacity = "0";
-        }, 2000);
+    els.shareBtn.addEventListener("click", async () => {
+      const url = entryUrl(index[currentPos].day).toString();
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+        await navigator.clipboard.writeText(url);
+        showShareMessage("Share link copied to clipboard");
+      } catch (_) {
+        showShareMessage("Copy the link below");
+        els.shareFallback.hidden = false;
+        els.shareFallback.value = url;
+        els.shareFallback.focus();
+        els.shareFallback.select();
       }
     });
     els.jumpSelect.addEventListener("change", () => {
@@ -319,18 +345,14 @@
     attachRefreshOnReturn();
 
     const match = location.hash.match(/^#day-(\d+)$/);
-    const newestDay = index[index.length - 1].day;
-    let requestedDay = match ? Number(match[1]) : null;
+    const staticDay = document.querySelector('meta[name="james-day"]')?.content;
+    const requestedDay = match ? Number(match[1]) : staticDay ? Number(staticDay) : null;
 
-    // Check if the requested day exists in our index. If not, or if it is older than the newest, we might want to consider keeping it, 
-    // but the original intent seemed to be forcing the newest.
-    // If the user has a link to an older day, it should probably show that older day.
-    // The previous code explicitly forced newest if it wasn't newest.
-    // Let's ensure the requested day exists before accepting it.
+    // Preserve direct entry and legacy fragment links; the homepage follows the newest day.
 
     const startPos = requestedDay !== null ? index.findIndex((e) => e.day === requestedDay) : -1;
 
-    await goTo(startPos !== -1 ? startPos : index.length - 1, "newer");
+    await goTo(startPos !== -1 ? startPos : index.length - 1, "newer", { latest: startPos === -1 });
   }
 
   init();
