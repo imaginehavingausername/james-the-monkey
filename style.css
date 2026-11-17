@@ -333,3 +333,117 @@ main {
 /* Clipboard fallback stays readable without squeezing the navigation controls. */
 .share-link-wrap { max-width: var(--content-width); width: 100%; margin: 0 auto; padding: 0 var(--space-3); }
 #share-link-fallback { width: 100%; min-width: 0; padding: 8px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--bg); color: var(--ink); }
+
+/* ---------- Site footer ---------- */
+
+.site-footer {
+  max-width: var(--content-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-3) var(--space-4);
+  border-top: 1px solid var(--hairline);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+.site-footer p {
+  margin: 0 0 var(--space-1);
+}
+
+.site-footer strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.site-footer a {
+  color: var(--accent-green);
+  text-underline-offset: 3px;
+}
+
+/* ---------- Archive page ---------- */
+
+.archive-intro {
+  margin: 0 0 var(--space-3);
+  color: var(--ink-muted);
+}
+
+.archive-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.archive-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px var(--space-2);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.archive-list a {
+  text-decoration: none;
+  min-width: 0;
+}
+
+.archive-list a:hover .archive-title {
+  color: var(--accent-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.archive-day {
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin-right: 6px;
+}
+
+.archive-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.archive-list time {
+  font-size: 14px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .site-footer {
+    padding: var(--space-2) var(--space-2) var(--space-3);
+  }
+}
+
+/* ---------- Share tooltip ---------- */
+
+#share-tooltip {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text, #333);
+  color: var(--bg, #fff);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+/* On narrow screens the share button sits near the right edge, so a centred
+   tooltip would spill past the viewport and allow sideways scrolling. */
+@media (max-width: 480px) {
+  #share-tooltip {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+}

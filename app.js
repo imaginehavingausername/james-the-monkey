@@ -4,6 +4,7 @@
   const SITE_ROOT = new URL(".", document.baseURI);
   const DAYS_DIR = new URL("days/", SITE_ROOT).href.replace(/\/$/, "");
   const INDEX_URL = `${DAYS_DIR}/index.json`;
+  const HOME_TITLE = "James the Monkey | A Daily Illustrated Story";
 
   const els = {
     main: document.getElementById("main"),
@@ -73,11 +74,14 @@
     return d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   }
 
-  function renderEntry(entry, direction) {
+  function renderEntry(entry, direction, { latest = false } = {}) {
     const pageTitle = `Day ${entry.day}: ${entry.title} | James the Monkey`;
-    document.title = pageTitle;
-    document.getElementById("meta-og-url")?.setAttribute("content", entryUrl(entry.day).href);
-    document.getElementById("canonical-url")?.setAttribute("href", entryUrl(entry.day).href);
+    // The homepage keeps its own title and canonical so search engines index it
+    // as the site's front page rather than as a copy of the newest entry.
+    const pageUrl = latest ? SITE_ROOT.href : entryUrl(entry.day).href;
+    document.title = latest ? HOME_TITLE : pageTitle;
+    document.getElementById("meta-og-url")?.setAttribute("content", pageUrl);
+    document.getElementById("canonical-url")?.setAttribute("href", pageUrl);
     
     // Update meta tags for social share previews
     const metaOgTitle = document.getElementById("meta-og-title");
@@ -99,10 +103,11 @@
       if (metaTwitterImage) metaTwitterImage.setAttribute("content", imageUrl);
     }
 
-    const wrap = document.createElement("div");
+    const wrap = document.createElement("article");
     wrap.className = "entry" + (direction === "older" ? " dir-older" : "");
+    wrap.dataset.day = String(entry.day);
     wrap.innerHTML = `
-      <p class="entry-date">${formatDate(entry.date)}</p>
+      <p class="entry-date"><time datetime="${escapeHtml(entry.date)}">${formatDate(entry.date)}</time></p>
       <h1 class="entry-title">${escapeHtml(entry.title)}</h1>
       <div class="entry-image-wrap">
         <img src="${DAYS_DIR}/${encodeURIComponent(entry.image)}" alt="${escapeHtml(entry.title)}" />
@@ -156,19 +161,27 @@
     els.dayCounter.textContent = `Day ${index[currentPos].day} of ${index.length}`;
   }
 
-  async function goTo(pos, direction, { latest = false } = {}) {
+  async function goTo(pos, direction, { latest = false, prerendered = null } = {}) {
     if (pos < 0 || pos >= index.length) return;
     const request = ++navigationRequest;
     currentPos = pos;
-    els.shareBtn.disabled = true;
-    renderLoading();
     els.shareFallback.hidden = true;
     const dayNumber = index[currentPos].day;
     updateNavState();
+    if (prerendered && Number(prerendered.dataset.day) === dayNumber) {
+      // The build already wrote this entry into the page; keep it instead of
+      // flashing a loading state and fetching the same story again.
+      attachSwipe(prerendered);
+      history.replaceState(null, "", latest ? SITE_ROOT : entryUrl(dayNumber));
+      els.shareBtn.disabled = false;
+      return;
+    }
+    els.shareBtn.disabled = true;
+    renderLoading();
     try {
       const entry = await loadEntry(dayNumber);
       if (request !== navigationRequest) return;
-      renderEntry(entry, direction);
+      renderEntry(entry, direction, { latest });
       history.replaceState(null, "", latest ? SITE_ROOT : entryUrl(dayNumber));
       els.shareBtn.disabled = false;
     } catch (err) {
@@ -325,11 +338,13 @@
   // ---------- boot ----------
 
   async function init() {
-    renderLoading();
+    const prerendered = els.main.querySelector(".entry[data-day]");
+    if (!prerendered) renderLoading();
     try {
       await loadIndex();
     } catch (err) {
-      renderError("Couldn't load the archive — check your connection.", init);
+      // A prerendered entry is still readable without the archive index.
+      if (!prerendered) renderError("Couldn't load the archive — check your connection.", init);
       return;
     }
 
@@ -352,7 +367,7 @@
 
     const startPos = requestedDay !== null ? index.findIndex((e) => e.day === requestedDay) : -1;
 
-    await goTo(startPos !== -1 ? startPos : index.length - 1, "newer", { latest: startPos === -1 });
+    await goTo(startPos !== -1 ? startPos : index.length - 1, "newer", { latest: startPos === -1, prerendered });
   }
 
   init();
