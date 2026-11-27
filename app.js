@@ -165,6 +165,7 @@
     if (pos < 0 || pos >= index.length) return;
     const request = ++navigationRequest;
     currentPos = pos;
+    const isLatest = currentPos === index.length - 1;
     els.shareFallback.hidden = true;
     const dayNumber = index[currentPos].day;
     updateNavState();
@@ -172,7 +173,7 @@
       // The build already wrote this entry into the page; keep it instead of
       // flashing a loading state and fetching the same story again.
       attachSwipe(prerendered);
-      history.replaceState(null, "", latest ? SITE_ROOT : entryUrl(dayNumber));
+      history.replaceState(null, "", isLatest || latest ? SITE_ROOT : entryUrl(dayNumber));
       els.shareBtn.disabled = false;
       return;
     }
@@ -181,8 +182,8 @@
     try {
       const entry = await loadEntry(dayNumber);
       if (request !== navigationRequest) return;
-      renderEntry(entry, direction, { latest });
-      history.replaceState(null, "", latest ? SITE_ROOT : entryUrl(dayNumber));
+      renderEntry(entry, direction, { latest: isLatest || latest });
+      history.replaceState(null, "", isLatest || latest ? SITE_ROOT : entryUrl(dayNumber));
       els.shareBtn.disabled = false;
     } catch (err) {
       if (request !== navigationRequest) return;
